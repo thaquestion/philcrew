@@ -111,7 +111,7 @@ const METRICS=[
   {k:"protein",label:"Protein",u:"g"}
 ];
 const CARE=[["sock","Socks"],["shoe","Shoes"],["shirt","Shirt"],["shorts","Shorts"],["chafe","Anti-chafe"],["tylenol","Tylenol"],["sleep","Sleep"]];
-const WEAR=[["hat","Hat"],["gloves","Gloves"],["jacket","Jacket"]];
+const WEAR=[["hat","Hat"],["gloves","Gloves"],["jacket","Jacket"],["bandana","Ice bandana"]];
 const SKY=[["sun","Sun"],["cloud","Cloudy"],["rain","Rain"],["wind","Windy"],["fog","Fog"]];
 /* gear he has on carries forward lap to lap until the crew changes it */
 function wearOf(n){for(let i=n;i>=1;i--){const w=S.laps[i]&&S.laps[i].wear;if(w)return w}return{}}
