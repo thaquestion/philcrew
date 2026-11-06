@@ -1,0 +1,311 @@
+<title>Phil's Backyard Crew</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: one phone-width column; sticky race clock on top, tab bar at bottom. Hi-vis orange accent like a bib. */
+:root{
+  --bg:#f3f4f1; --panel:#ffffff; --panel2:#e9ebe6; --fg:#16201b; --muted:#5d6a62; --line:#d4d9d2;
+  --accent:#e8590c; --accent-fg:#ffffff; --ok:#2b8a3e; --warn:#c77700; --bad:#c92a2a; --track:#dfe3dc;
+  --display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1512; --panel:#18211c; --panel2:#212c26; --fg:#e8eee9; --muted:#97a69c; --line:#2c3a32;
+  --accent:#ff7a29; --accent-fg:#1a0d04; --ok:#51cf66; --warn:#fab005; --bad:#ff6b6b; --track:#26332c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1512; --panel:#18211c; --panel2:#212c26; --fg:#e8eee9; --muted:#97a69c; --line:#2c3a32;
+  --accent:#ff7a29; --accent-fg:#1a0d04; --ok:#51cf66; --warn:#fab005; --bad:#ff6b6b; --track:#26332c; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.4}
+</style>
+<header>
+<div id="top" style="position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <div style="min-width:0">
+      <div id="runnerName" style="font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Backyard crew</div>
+      <div style="display:flex;align-items:baseline;gap:10px">
+        <span id="lapBig" style="font-family:var(--display);font-weight:800;font-size:40px;line-height:1">Lap —</span>
+        <span id="lapMode" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:12px;color:var(--muted)" id="clockLabel">Next bell in</div>
+      <div id="clockBig" style="font-family:var(--display);font-weight:700;font-size:30px;line-height:1;font-variant-numeric:tabular-nums">--:--</div>
+    </div>
+  </div>
+</div>
+</header>
+<style>
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 110px;max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.h{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.01em;margin:0;text-wrap:balance}
+.eyebrow{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted);font-size:14px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{font:600 16px var(--body);border:1px solid var(--line);background:var(--panel2);color:var(--fg);border-radius:10px;padding:10px 14px;min-height:44px;cursor:pointer}
+.btn:focus-visible,.sel:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.big{font-family:var(--display);font-weight:800;font-size:24px;padding:14px;width:100%;letter-spacing:.02em}
+.btn.sm{min-height:36px;padding:6px 10px;font-size:14px}
+.btn.ghost{background:transparent}
+.sel,input,textarea{font:500 16px var(--body);color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;min-height:44px;min-width:0;max-width:100%}
+textarea{width:100%;min-height:60px;resize:vertical;box-sizing:border-box}
+.item{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center}
+.item .sel{width:100%}
+.qty{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.qty button{width:40px;height:42px;border:0;background:var(--panel2);color:var(--fg);font:700 20px var(--body);cursor:pointer}
+.qty span{min-width:30px;text-align:center;font-variant-numeric:tabular-nums;font-weight:600}
+.x{width:42px;height:44px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:20px;cursor:pointer}
+.bars{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:78px 1fr auto;gap:8px;align-items:center;font-size:14px}
+.bar .t{height:10px;background:var(--track);border-radius:6px;overflow:hidden}
+.bar .f{height:100%;border-radius:6px}
+.bar .v{font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
+.chip.edit{color:var(--warn);border-color:var(--warn)}
+.chip.ok{color:var(--ok);border-color:var(--ok)}
+.sugg{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.sugg:first-child{border-top:0}
+.req{background:color-mix(in srgb,var(--accent) 14%,var(--panel));border-color:var(--accent)}
+.lapRow{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:12px;border-radius:12px;background:var(--panel);border:1px solid var(--line);cursor:pointer;text-align:left;color:var(--fg);font:inherit;width:100%}
+.lapRow.cur{border-color:var(--accent);box-shadow:inset 4px 0 0 var(--accent)}
+.lapNum{font-family:var(--display);font-weight:800;font-size:26px;line-height:1}
+.mini{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--panel);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.tabs button{border:0;background:transparent;color:var(--muted);font:700 15px var(--display);letter-spacing:.06em;text-transform:uppercase;padding:14px 4px;cursor:pointer}
+.tabs button[aria-current="page"]{color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
+.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.filters .btn{white-space:nowrap}
+.filters .btn[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.menuItem{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:10px 0;border-top:1px solid var(--line)}
+.menuItem:first-child{border-top:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.tile{min-height:64px;font:700 17px var(--display);letter-spacing:.02em;border-radius:12px;border:2px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;padding:8px}
+.tile[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,var(--panel))}
+.sheet{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;padding-top:env(safe-area-inset-top,0px)}
+.banner{font-size:14px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--warn) 16%,var(--panel));border:1px solid var(--warn)}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.kit{display:flex;flex-direction:column;gap:6px;padding-top:2px}
+</style>
+<main id="app" class="wrap">
+  <div class="card"><div class="h">Loading race data…</div><div class="muted" id="loadNote">Connecting to the shared crew board.</div></div>
+</main>
+<nav class="tabs" id="tabs" aria-label="Sections">
+  <button data-tab="now" aria-current="page">Now</button>
+  <button data-tab="laps">Laps</button>
+  <button data-tab="menu">Options</button>
+  <button data-tab="setup">Setup</button>
+</nav>
+<div class="sheet" id="sheet" hidden></div>
+<script>
+(function(){
+const METRICS=[
+  {k:"carbs",label:"Carbs",u:"g"},
+  {k:"sodium",label:"Sodium",u:"mg"},
+  {k:"fluid",label:"Fluid",u:"ml"},
+  {k:"cals",label:"Calories",u:"cal"},
+  {k:"protein",label:"Protein",u:"g"}
+];
+const CARE=[["sock","Socks"],["shoe","Shoes"],["shirt","Shirt"],["shorts","Shorts"],["chafe","Anti-chafe"],["tylenol","Tylenol"],["sleep","Sleep"]];
+const WEAR=[["hat","Hat"],["gloves","Gloves"],["jacket","Jacket"]];
+const SKY=[["sun","Sun"],["cloud","Cloudy"],["rain","Rain"],["wind","Windy"],["fog","Fog"]];
+/* gear he has on carries forward lap to lap until the crew changes it */
+function wearOf(n){for(let i=n;i>=1;i--){const w=S.laps[i]&&S.laps[i].wear;if(w)return w}return{}}
+/* weather: live hourly forecast for the race area if the viewer's browser can reach it, else what the crew logged */
+const WX={hours:null,tried:false};
+async function loadWx(){if(WX.tried)return;WX.tried=true;const c=cfg();if(!c.lat||!c.lon)return;try{const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),8000);const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+c.lat+"&longitude="+c.lon+"&hourly=temperature_2m,apparent_temperature,precipitation_probability,wind_speed_10m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=UTC&forecast_days=7",{signal:ctl.signal});clearTimeout(t);if(!r.ok)return;const j=await r.json();const h=j.hourly,o={};h.time.forEach((tm,i)=>{o[Date.parse(tm+"Z")]={temp:Math.round(h.temperature_2m[i]),feels:Math.round(h.apparent_temperature[i]),rain:h.precipitation_probability[i],wind:Math.round(h.wind_speed_10m[i]),code:h.weather_code[i]}});WX.hours=o;lastHTML="";render()}catch(e){}lastHTML="";render()}
+function codeSky(c){if(c==null)return"";if(c<=1)return"sun";if(c<=3)return"cloud";if(c===45||c===48)return"fog";return c>=51?"rain":"cloud"}
+function fcFor(n){if(!WX.hours)return null;const st=lapStart(n);if(st==null)return null;const hr=Math.floor(st/3600000)*3600000;return WX.hours[hr]||null}
+function wxOf(n){const L=S.laps[n]||{};if(L.wx)return Object.assign({src:"crew"},L.wx);const f=fcFor(n);return f?{temp:f.temp,feels:f.feels,rain:f.rain,wind:f.wind,sky:codeSky(f.code),src:"forecast"}:null}
+function wxText(w){if(!w)return"";const sky=(SKY.find(x=>x[0]===w.sky)||[])[1];return[w.temp!=null?w.temp+"°F":"",w.feels!=null&&w.feels!==w.temp?"feels "+w.feels+"°":"",sky,w.rain!=null&&w.src==="forecast"?w.rain+"% rain":"",w.wind?w.wind+" mph wind":""].filter(Boolean).join(" · ")}
+const CATS={drink:"Drinks & mixes",gel:"Gels & chews",food:"Real food",electrolyte:"Electrolytes",other:"Other"};
+const TAGS=["Salty","Sweet","Real food","Soup / warm","Cold drink","Ice","Caffeine","Just water","Stomach off","Nothing"];
+const S={db:null,uid:null,config:null,menu:{},laps:{},reqs:[],loaded:{config:false,menu:false,laps:false},tab:"now",canWrite:true,runnerSel:{tags:[],items:[]}};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+function fmt(sec){if(sec==null||isNaN(sec))return"—";sec=Math.max(0,Math.round(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return h?h+":"+pad(m)+":"+pad(s):m+":"+pad(s)}
+function parseTime(t){t=String(t||"").trim();if(!t)return null;if(/^\d+$/.test(t)){if(t.length<=2)return +t*60;const s=+t.slice(-2),m=+t.slice(0,-2);return m*60+s}const p=t.split(":").map(Number);if(p.some(isNaN))return null;return p.length===3?p[0]*3600+p[1]*60+p[2]:p[0]*60+(p[1]||0)}
+const lapId=n=>"L"+String(n).padStart(3,"0");
+const cfg=()=>S.config||{};
+const targets=()=>Object.assign({carbs:75,sodium:650,fluid:650,cals:0,protein:0},cfg().targets||{});
+const bands=()=>cfg().bands||{};
+const stepOf=id=>(S.menu[id]&&+S.menu[id].step)||1;
+const defQty=id=>(S.menu[id]&&+S.menu[id].defaultQty)||1;
+const qtyLabel=it=>{const m=S.menu[it.id];const q=it.qty||1;return m&&m.unit?q+" "+m.unit:String(q)};
+const lapMs=()=>(cfg().lapMinutes||60)*60000;
+
+function clockLap(){const c=cfg();if(c.lapOverride)return c.lapOverride;if(!c.startAt)return 0;const el=Date.now()-Date.parse(c.startAt);if(el<0)return 0;return Math.floor(el/lapMs())+1}
+function lapStart(n){const c=cfg();if(!c.startAt)return null;return Date.parse(c.startAt)+(n-1)*lapMs()}
+function upNext(){return clockLap()+1}
+function lapItems(n){const L=S.laps[n];return L&&Array.isArray(L.items)?L.items:[]}
+function totals(items){const t={carbs:0,sodium:0,fluid:0,potassium:0,protein:0,caffeine:0,fat:0,cals:0};items.forEach(it=>{const m=S.menu[it.id];if(!m)return;const q=it.qty||1;for(const k in t)t[k]+=(+m[k]||0)*q});return t}
+function sameItems(a,b){a=a||[];b=b||[];if(a.length!==b.length)return false;return a.every((x,i)=>x.id===b[i].id&&(x.qty||1)===(b[i].qty||1))}
+function menuSorted(){return Object.entries(S.menu).map(([id,m])=>Object.assign({id},m)).sort((a,b)=>(a.cat||"").localeCompare(b.cat||"")||(a.name||"").localeCompare(b.name||""))}
+
+/* write queue: one write at a time per doc, latest value wins */
+const Q={};
+function write(path,body){if(!S.db)return;const q=Q[path]||(Q[path]={busy:false,next:null});q.next=body;if(!q.busy)flush(path)}
+async function flush(path){const q=Q[path];if(!q.next){q.busy=false;return}q.busy=true;const body=q.next;q.next=null;try{await S.db.doc(path).set(body)}catch(e){if(e&&e.code==="invalid_argument"){S.canWrite=false;toast("This view is read-only. Ask TJ for edit access.")}else toast("Couldn't save. Check signal and try again.")}flush(path)}
+function saveLap(n,patch){const cur=S.laps[n]||{lap:n,items:[],orig:[]};const next=Object.assign({},cur,patch,{lap:n});S.laps[n]=next;write("laps/"+lapId(n),JSON.parse(JSON.stringify(next)));render()}
+function saveConfig(patch){S.config=Object.assign({},cfg(),patch);const body=JSON.parse(JSON.stringify(S.config));Object.keys(body).forEach(k=>body[k]===undefined&&delete body[k]);write("race/config",body);render()}
+
+let toastT;function toast(msg){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("role","status");t.style.cssText="position:fixed;left:16px;right:16px;bottom:calc(70px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--fg);color:var(--bg);padding:12px 14px;border-radius:12px;font-weight:600;text-align:center";document.body.appendChild(t)}t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600)}
+
+/* ---------- rendering ---------- */
+function itemSelect(selected,attrs){let h='<select class="sel" '+attrs+'>';if(!selected)h+='<option value="">+ Add food or drink…</option>';const groups={};menuSorted().forEach(m=>{(groups[m.cat||"other"]=groups[m.cat||"other"]||[]).push(m)});Object.keys(CATS).forEach(c=>{if(!groups[c])return;h+='<optgroup label="'+esc(CATS[c])+'">';groups[c].forEach(m=>{h+='<option value="'+esc(m.id)+'"'+(m.id===selected?" selected":"")+'>'+esc(m.name)+(m.serving?" ("+esc(m.serving)+")":"")+'</option>'});h+='</optgroup>'});if(selected&&!S.menu[selected])h+='<option value="'+esc(selected)+'" selected>(removed item)</option>';return h+'</select>'}
+function barsHTML(t){const T=targets();return '<div class="bars">'+METRICS.filter(m=>T[m.k]>0||t[m.k]>0).map(m=>{const goal=T[m.k],v=Math.round(t[m.k]);const pct=goal?Math.min(100,v/goal*100):100;let col="var(--ok)";const b=bands()[m.k];if(b){col=v>=b[0]&&v<=b[1]?"var(--ok)":(v>=b[0]*.85&&v<=b[1]*1.15)?"var(--warn)":"var(--bad)"}else if(goal){const r=v/goal;col=r<.8?"var(--warn)":r>1.35?"var(--bad)":"var(--ok)";if(r<.5)col="var(--bad)"}const scale=b?b[1]*1.15:goal;const pct2=scale?Math.min(100,v/scale*100):pct;return '<div class="bar"><span>'+m.label+'</span><div class="t"><div class="f" style="width:'+pct2+'%;background:'+col+'"></div></div><span class="v">'+v+(b?" / "+b[0]+"-"+b[1]:goal?" / "+goal:"")+" "+m.u+'</span></div>'}).join("")+'</div>'}
+function suggestions(items,limit){const T=targets(),t=totals(items);const gap={};["carbs","sodium","fluid"].forEach(k=>{if(T[k])gap[k]=Math.max(0,T[k]-t[k])});const anyGap=Object.values(gap).some(v=>v>0);if(!anyGap)return[];const inLap=new Set(items.map(i=>i.id));return menuSorted().filter(m=>!inLap.has(m.id)).map(m=>{let score=0,fills=[];const dq=+m.defaultQty||1;for(const k in gap){const v=(+m[k]||0)*dq;if(!v)continue;const T2=T[k];const useful=Math.min(v,gap[k]);const over=Math.max(0,v-gap[k]);score+=useful/T2-0.5*over/T2;if(useful>0)fills.push("+"+Math.round(useful)+(k==="fluid"?" ml ":k==="carbs"?"g ":" mg ")+({carbs:"carbs",sodium:"Na",fluid:"fluid"}[k]))}return{m,score,fills}}).filter(x=>x.score>0.05).sort((a,b)=>b.score-a.score).slice(0,limit||6)}
+function gapLine(items){const t=totals(items),B=bands(),T=targets();const short=[],over=[];[["carbs","g carbs"],["sodium","mg sodium"],["fluid","ml fluid"]].forEach(([k,u])=>{const lo=B[k]?B[k][0]:T[k]*.9,hi=B[k]?B[k][1]:null;if(lo&&t[k]<lo)short.push(Math.round(lo-t[k])+u);else if(hi&&t[k]>hi)over.push(Math.round(t[k]-hi)+u)});if(!short.length&&!over.length)return"Inside the target bands";return[short.length?"Short "+short.join(", "):"",over.length?"Over by "+over.join(", "):""].filter(Boolean).join(" · ")}
+
+function editorHTML(n){const L=S.laps[n]||{};const items=lapItems(n);const edited=L.orig&&L.orig.length&&!sameItems(items,L.orig);const t=totals(items);const sg=suggestions(items,5);
+const care=L.care||{};let h='';const meta=[L.clock,L.pace?"target "+L.pace+" min":"",L.comment].filter(Boolean).join(" · ");if(meta)h+='<div class="mini">'+esc(meta)+'</div>';
+const on='background:var(--fg);color:var(--bg);border-color:var(--fg)';const wear=wearOf(n);const w=wxOf(n);
+h+='<div class="row" style="justify-content:space-between"><span class="eyebrow">Weather</span><span class="mini">'+(w?esc(wxText(w))+(w.src==="crew"?" (logged)":" (forecast)"):"Not logged yet")+'</span></div>';
+h+='<div class="kit"><span class="eyebrow">Change</span><div class="row">'+CARE.map(([k,l])=>'<button class="btn sm" data-act="care" data-k="'+k+'" data-lap="'+n+'" aria-pressed="'+(!!care[k])+'" style="'+(care[k]?on:'')+'">'+(care[k]?"✓ ":"")+l+'</button>').join("")+'</div></div>';
+h+='<div class="kit"><span class="eyebrow">Wearing</span><div class="row">'+WEAR.map(([k,l])=>'<button class="btn sm" data-act="wear" data-k="'+k+'" data-lap="'+n+'" aria-pressed="'+(!!wear[k])+'" style="'+(wear[k]?on:'')+'">'+(wear[k]?"✓ ":"")+l+'</button>').join("")+'</div></div>';
+h+='<div class="row" style="justify-content:space-between"><div class="row"><span class="eyebrow">Fuel</span>'+(edited?'<span class="chip edit">Changed from plan</span>':(L.orig&&L.orig.length?'<span class="chip ok">As planned</span>':''))+'</div>'+(edited?'<button class="btn sm ghost" data-act="reset" data-lap="'+n+'">Reset to plan</button>':'')+'</div>';
+if(!items.length)h+='<div class="muted">Nothing set for this lap yet. Add from the list below.</div>';
+items.forEach((it,i)=>{h+='<div class="item">'+itemSelect(it.id,'data-act="swap" data-lap="'+n+'" data-i="'+i+'" aria-label="Swap item"')+'<div class="qty"><button data-act="dec" data-lap="'+n+'" data-i="'+i+'" aria-label="Less">−</button><span style="padding:0 4px">'+esc(qtyLabel(it))+'</span><button data-act="inc" data-lap="'+n+'" data-i="'+i+'" aria-label="More">+</button></div><button class="x" data-act="rm" data-lap="'+n+'" data-i="'+i+'" aria-label="Remove">×</button></div>'});
+h+=itemSelect("",'data-act="add" data-lap="'+n+'" aria-label="Add item" style="width:100%"');
+h+=barsHTML(t);
+h+='<div class="mini">'+Math.round(t.cals)+' cal · '+gapLine(items)+'</div>';
+if(sg.length){h+='<div><div class="eyebrow" style="margin-bottom:4px">Fills the gap</div>'+sg.map(x=>'<div class="sugg"><div style="min-width:0"><div class="ell" style="font-weight:600">'+esc(x.m.name)+'</div><div class="mini">'+esc(x.fills.join(" · "))+'</div></div><button class="btn sm" data-act="addid" data-lap="'+n+'" data-id="'+esc(x.m.id)+'">+ Add</button></div>').join("")+'</div>'}
+h+='<label class="f">Crew notes for lap '+n+'<textarea id="note-'+n+'" data-act="note" data-lap="'+n+'" placeholder="e.g. wants it cold, swap if stomach is off">'+esc(L.notes||"")+'</textarea></label>';
+return h}
+
+function reqBanner(){const open=S.reqs.filter(r=>r.status!=="ready");if(!open.length)return"";return open.map(r=>{const names=(r.items||[]).map(id=>S.menu[id]?S.menu[id].name:"").filter(Boolean);const bits=[...(r.tags||[]),...names];return '<div class="card req"><div class="row" style="justify-content:space-between"><span class="eyebrow" style="color:var(--accent)">Phil asked · for lap '+esc(r.lap)+'</span><span class="mini">'+esc(timeAgo(r.at))+'</span></div><div style="font-weight:700;font-size:18px">'+esc(bits.join(" · ")||"See note")+'</div>'+(r.note?'<div>"'+esc(r.note)+'"</div>':'')+'<div class="row">'+(names.length?'<button class="btn" data-act="reqadd" data-id="'+esc(r._id)+'">Add to lap '+esc(r.lap)+'</button>':'')+'<button class="btn primary" data-act="reqready" data-id="'+esc(r._id)+'">Got it, ready</button></div></div>'}).join("")}
+function timeAgo(iso){const s=(Date.now()-Date.parse(iso))/1000;if(isNaN(s))return"";if(s<60)return"just now";if(s<3600)return Math.floor(s/60)+" min ago";return Math.floor(s/3600)+" h ago"}
+
+function lastTimes(){return Object.values(S.laps).filter(l=>l.time!=null).sort((a,b)=>b.lap-a.lap)}
+
+function wxCard(n){const w=wxOf(n)||{};const lw=(S.laps[n]||{}).wx;const on='background:var(--fg);color:var(--bg);border-color:var(--fg)';const temp=lw&&lw.temp!=null?lw.temp:w.temp;
+const status=lw?"Crew logged for lap "+n:WX.hours?"Forecast for lap "+n+": "+wxText(w):WX.tried&&(cfg().lat)?"No live forecast on this phone. Tap to log it.":"Loading forecast…";
+return '<div class="card"><div class="row" style="justify-content:space-between"><div class="h">Weather</div><span class="mini">'+esc(cfg().place||"")+'</span></div><div class="mini">'+esc(status)+'</div><div class="row"><div class="qty"><button data-act="tdn" data-lap="'+n+'" aria-label="Colder">−</button><span style="padding:0 6px;font-weight:700;font-size:20px">'+(temp!=null?temp:"--")+'°F</span><button data-act="tup" data-lap="'+n+'" aria-label="Warmer">+</button></div></div><div class="row">'+SKY.map(([k,l])=>{const sel=lw?lw.sky===k:false;return '<button class="btn sm" data-act="sky" data-k="'+k+'" data-lap="'+n+'" aria-pressed="'+sel+'" style="'+(sel?on:'')+'">'+l+'</button>'}).join("")+'</div></div>'}
+function renderNow(){const cur=clockLap(),nx=upNext();const done=lastTimes();const last=done[0];const avg=done.length?done.reduce((a,l)=>a+l.time,0)/done.length:null;
+let h=reqBanner();
+if(cfg().planNote)h+='<div class="banner">'+esc(cfg().planNote)+'</div>';
+h+='<div class="card"><div class="row" style="justify-content:space-between"><div><div class="eyebrow">'+(cur?"On course":"Pre-race")+'</div><div class="h">'+(cur?"Lap "+cur+" running":"Waiting for the first bell")+'</div></div><div style="text-align:right"><div class="eyebrow">Into lap</div><div id="intoLap" style="font-family:var(--display);font-weight:700;font-size:24px;font-variant-numeric:tabular-nums">—</div></div></div>';
+if(cur){const logged=S.laps[cur]&&S.laps[cur].time!=null;h+=logged?'<div class="row"><span class="chip ok">Lap '+cur+' in at '+fmt(S.laps[cur].time)+'</span><button class="btn sm ghost" data-act="undoin" data-lap="'+cur+'">Undo</button></div>':'<button class="btn primary big" data-act="in">Phil\'s in · log lap '+cur+'</button>'}
+else if(!cfg().startAt)h+='<button class="btn primary big" data-act="startnow">Start race clock now</button><div class="mini">Or set the exact start time in Setup.</div>';
+h+='<div class="row" style="justify-content:space-between"><div class="mini">Last lap: <b>'+(last?"L"+last.lap+" "+fmt(last.time):"—")+'</b> · Avg: <b>'+(avg?fmt(avg):"—")+'</b> · Laps done: <b>'+done.length+'</b></div><button class="btn sm ghost" data-act="manualtime" data-lap="'+(cur||1)+'">Type a time</button></div>';
+h+='<div id="manualBox" hidden class="row"><input id="manualIn" inputmode="numeric" placeholder="mm:ss e.g. 52:10" aria-label="Lap time"><button class="btn primary" data-act="manualsave">Save</button></div>';
+h+='</div>';
+h+=wxCard(cur||1);
+h+='<div class="card"><div><div class="eyebrow" style="color:var(--accent)">Have ready when he comes in</div><div class="h">Lap '+nx+' handoff</div></div>'+editorHTML(nx)+'</div>';
+return h}
+
+function kitByTemp(){const rows=[];Object.values(S.laps).forEach(L=>{if(L.time==null)return;const w=wxOf(L.lap);if(!w||w.temp==null)return;rows.push({t:w.temp,time:L.time,wear:wearOf(L.lap)})});if(rows.length<3)return"";const B=[["Under 40°F",-99,40],["40 to 54°F",40,55],["55°F and up",55,999]];const lines=B.map(([lab,lo,hi])=>{const r=rows.filter(x=>x.t>=lo&&x.t<hi);if(!r.length)return"";const avg=r.reduce((a,x)=>a+x.time,0)/r.length;const worn=WEAR.filter(([k])=>r.filter(x=>x.wear[k]).length*2>=r.length).map(([,l])=>l);return '<div class="row" style="justify-content:space-between"><span style="font-weight:600">'+lab+'</span><span class="mini">'+r.length+' laps · avg '+fmt(avg)+' · '+(worn.length?esc(worn.join(", ")):"no hat, gloves or jacket")+'</span></div>'}).join("");return '<div class="card"><div class="h">What he wore by temperature</div>'+lines+'</div>'}
+function renderLaps(){const cur=clockLap();const nums=Object.keys(S.laps).map(Number);const max=Math.max(cur+6,...nums,12);let h=kitByTemp()+'<div class="card"><div class="h">All laps</div><div class="muted">Tap a lap to change what he gets. Orange edge is the lap on course.</div></div><div style="display:flex;flex-direction:column;gap:8px">';
+for(let n=1;n<=max;n++){const L=S.laps[n]||{};const items=lapItems(n);const t=totals(items);const edited=L.orig&&L.orig.length&&!sameItems(items,L.orig);const names=items.filter(i=>!(S.menu[i.id]&&S.menu[i.id].unit)).map(i=>(S.menu[i.id]?S.menu[i.id].name:"?")+((i.qty||1)>1?" ×"+i.qty:"")).join(", ");const care=CARE.filter(([k])=>(L.care||{})[k]).map(([,l])=>l);const wn=wearOf(n),wp=wearOf(n-1);WEAR.forEach(([k,l])=>{if(!!wn[k]!==!!wp[k])care.push((wn[k]?"+ ":"− ")+l)});const wx=wxOf(n);if(wx&&wx.temp!=null)care.unshift(wx.temp+"°F");
+h+='<button class="lapRow'+(n===cur?" cur":"")+'" data-act="open" data-lap="'+n+'"><span class="lapNum">'+n+'</span><span style="min-width:0"><span class="mini" style="display:block">'+esc([L.clock,L.pace?L.pace+" min":""].filter(Boolean).join(" · "))+'</span><span class="ell" style="display:block;font-weight:600">'+esc(names||"Nothing set")+'</span><span class="mini">'+Math.round(t.carbs)+'g C · '+Math.round(t.sodium)+' Na · '+Math.round(t.fluid)+' ml'+(care.length?' · '+esc(care.join(", ")):'')+(edited?' · <span style="color:var(--warn)">changed</span>':'')+'</span></span><span class="mini" style="text-align:right">'+(L.time!=null?'<b style="color:var(--fg)">'+fmt(L.time)+'</b>':'—')+'</span></button>'}
+return h+'</div>'}
+
+let menuFilter="all",menuSort="name";
+function renderMenu(){const T=targets();let list=menuSorted();if(menuFilter!=="all")list=list.filter(m=>(m.cat||"other")===menuFilter);if(menuSort!=="name")list.sort((a,b)=>(+b[menuSort]||0)-(+a[menuSort]||0));
+let h='<div class="card"><div class="h">Food & hydration options</div><div class="muted">Per serving. Goal per lap: '+T.carbs+'g carbs, '+T.sodium+'mg sodium, '+T.fluid+' ml fluid'+(bands().carbs?' (bands: carbs '+bands().carbs.join("-")+'g, sodium '+(bands().sodium||[]).join("-")+'mg, fluid '+(bands().fluid||[]).join("-")+'ml)':'')+'.</div><div class="filters">'+['all',...Object.keys(CATS)].map(c=>'<button class="btn sm" data-act="mf" data-v="'+c+'" aria-pressed="'+(menuFilter===c)+'">'+(c==="all"?"All":CATS[c])+'</button>').join("")+'</div><label class="f">Sort by<select class="sel" data-act="ms">'+[["name","Name"],["carbs","Most carbs"],["sodium","Most sodium"],["fluid","Most fluid"],["cals","Most calories"],["protein","Most protein"]].map(([v,l])=>'<option value="'+v+'"'+(menuSort===v?" selected":"")+'>'+l+'</option>').join("")+'</select></label></div><div class="card">';
+if(!list.length)h+='<div class="muted">No options here yet. Add one below.</div>';
+list.forEach(m=>{const pc=T.carbs?Math.round((+m.carbs||0)/T.carbs*100):0;h+='<div class="menuItem"><div style="min-width:0"><div style="font-weight:600">'+esc(m.name)+'</div><div class="mini">'+esc(m.serving||"")+(m.notes?' · '+esc(m.notes):'')+'</div></div><div class="mini" style="text-align:right">'+(m.cals?Math.round(m.cals)+' cal':'')+'</div><div class="mini" style="grid-column:1/-1">'+[["carbs","g C"],["sodium","mg Na"],["fluid","ml"],["protein","g P"],["fat","g F"]].filter(([k])=>+m[k]).map(([k,u])=>'<b style="color:var(--fg)">'+(Math.round(+m[k]*10)/10)+'</b> '+u).join(" · ")+(pc?' · '+pc+'% of carb goal':'')+'</div><div style="grid-column:1/-1" class="row"><button class="btn sm" data-act="addnext" data-id="'+esc(m.id)+'">+ Lap '+upNext()+'</button>'+(m.custom?'<button class="btn sm ghost" data-act="delitem" data-id="'+esc(m.id)+'">Remove</button>':'')+'</div></div>'});
+h+='</div><div class="card"><div class="h">Add an option</div><div class="formgrid"><label class="f" style="grid-column:1/-1">Name<input id="ni-name" placeholder="e.g. Mashed potatoes"></label><label class="f">Type<select class="sel" id="ni-cat">'+Object.keys(CATS).map(c=>'<option value="'+c+'">'+CATS[c]+'</option>').join("")+'</select></label><label class="f">Serving<input id="ni-serving" placeholder="1 cup"></label>'+[["carbs","Carbs g"],["sodium","Sodium mg"],["fluid","Fluid ml"],["protein","Protein g"],["fat","Fat g"],["cals","Calories"]].map(([k,l])=>'<label class="f">'+l+'<input id="ni-'+k+'" inputmode="decimal"></label>').join("")+'</div><button class="btn primary" data-act="newitem">Add to options</button></div>';
+return h}
+
+function renderSetup(){const c=cfg(),T=targets();const st=c.startAt?new Date(c.startAt):null;const local=st?st.getFullYear()+"-"+pad(st.getMonth()+1)+"-"+pad(st.getDate())+"T"+pad(st.getHours())+":"+pad(st.getMinutes()):"";
+let h='<div class="card"><div class="h">Race clock</div><label class="f">Runner<input id="su-name" value="'+esc(c.runner||"")+'"></label><label class="f">First bell (start time)<input id="su-start" type="datetime-local" value="'+local+'"></label><div class="row"><button class="btn primary" data-act="savestart">Save start time</button><button class="btn" data-act="startnow">Start now</button>'+(c.startAt?'<button class="btn ghost" data-act="clearstart">Clear</button>':'')+'</div><div class="mini">Laps tick over every '+(c.lapMinutes||60)+' minutes from the first bell.</div>';
+h+='<div class="row"><span class="mini">Lap shown: '+(clockLap()||"pre-race")+(c.lapOverride?" (set by hand)":"")+'</span><button class="btn sm" data-act="lapdown">− Lap</button><button class="btn sm" data-act="lapup">+ Lap</button>'+(c.lapOverride?'<button class="btn sm ghost" data-act="lapauto">Back to clock</button>':'')+'</div></div>';
+h+='<div class="card"><div class="h">Goals per lap (per hour)</div><div class="formgrid">'+METRICS.map(m=>'<label class="f">'+m.label+' ('+m.u+')<input id="tg-'+m.k+'" inputmode="decimal" value="'+esc(T[m.k])+'"></label>').join("")+'</div><button class="btn primary" data-act="savetargets">Save goals</button></div>';
+h+='<div class="card"><div class="h">Runner view</div><div class="muted">Phil opens this same page with <b>#runner</b> on the end of the link. He taps what he feels like and it shows up on your Now screen.</div><button class="btn" data-act="gorunner">Open runner view here</button></div>';
+return h}
+
+function renderRunner(){const nx=upNext();const items=lapItems(nx);const mine=S.reqs[0];const quick=menuSorted();
+let h='<div class="card"><div class="eyebrow" style="color:var(--accent)">Phil</div><div class="h" style="font-size:28px">What do you want next lap?</div><div class="muted">Coming up: lap '+nx+'. Crew currently has: '+esc(items.map(i=>S.menu[i.id]?S.menu[i.id].name:"").filter(Boolean).join(", ")||"nothing set")+'.</div></div>';
+if(mine)h+='<div class="card '+(mine.status==="ready"?"":"req")+'"><div class="eyebrow">Your last ask · lap '+esc(mine.lap)+'</div><div style="font-weight:700">'+esc([...(mine.tags||[]),...(mine.items||[]).map(id=>S.menu[id]?S.menu[id].name:"")].filter(Boolean).join(" · ")||mine.note||"")+'</div><div>'+(mine.status==="ready"?'<span class="chip ok">Crew has it ready</span>':'<span class="chip">Sent to crew</span>')+'</div></div>';
+h+='<div class="card"><div class="eyebrow">I feel like</div><div class="grid2">'+TAGS.map(t=>'<button class="tile" data-act="rtag" data-v="'+esc(t)+'" aria-pressed="'+S.runnerSel.tags.includes(t)+'">'+esc(t)+'</button>').join("")+'</div></div>';
+h+='<div class="card"><div class="eyebrow">Specific stuff</div><div class="grid2">'+quick.map(m=>'<button class="tile" style="font-size:15px" data-act="ritem" data-v="'+esc(m.id)+'" aria-pressed="'+S.runnerSel.items.includes(m.id)+'">'+esc(m.name)+'</button>').join("")+'</div></div>';
+h+='<div class="card"><label class="f">Anything else<textarea id="rnote" placeholder="e.g. need new socks, feet hurt">'+esc(S.runnerSel.note||"")+'</textarea></label><button class="btn primary big" data-act="rsend">Send to crew</button><button class="btn ghost" data-act="gocrew">Crew view</button></div>';
+return h}
+
+let lastHTML="";
+function render(){if(!(S.loaded.config&&S.loaded.menu&&S.loaded.laps))return;const runner=location.hash==="#runner";$("#tabs").hidden=runner;
+const c=cfg();$("#runnerName").textContent=(c.runner||"Runner")+(runner?" · runner":" · crew");
+const app=$("#app");const ae=document.activeElement;const keepId=ae&&ae.id&&app.contains(ae)&&(ae.tagName==="TEXTAREA"||ae.tagName==="INPUT")?ae.id:null;
+if(keepId)return; // don't clobber typing
+let h=runner?renderRunner():S.tab==="now"?renderNow():S.tab==="laps"?renderLaps():S.tab==="menu"?renderMenu():renderSetup();
+if(!S.canWrite)h='<div class="banner">You can see the board but not change it. TJ can give you edit access from Share.</div>'+h;
+if(h!==lastHTML){app.innerHTML=h;lastHTML=h}
+if(sheetLap)openSheet(sheetLap,true);
+document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.tab===S.tab?"page":"false"));tick()}
+
+let sheetLap=null;
+function openSheet(n,refresh){sheetLap=n;const sh=$("#sheet");const ae=document.activeElement;if(refresh&&ae&&sh.contains(ae)&&(ae.tagName==="TEXTAREA"||ae.tagName==="INPUT"))return;const L=S.laps[n]||{};sh.innerHTML='<div class="wrap" style="padding-bottom:40px"><div class="row" style="justify-content:space-between"><div class="h" style="font-size:28px">Lap '+n+'</div><button class="btn" data-act="close">Done</button></div><div class="card"><label class="f">Lap time<div class="row"><input id="lt-'+n+'" inputmode="numeric" placeholder="mm:ss" value="'+(L.time!=null?fmt(L.time):"")+'"><button class="btn" data-act="savetime" data-lap="'+n+'">Save time</button>'+(L.time!=null?'<button class="btn ghost" data-act="undoin" data-lap="'+n+'">Clear</button>':'')+'</div></label></div><div class="card">'+editorHTML(n)+'</div></div>';sh.hidden=false;if(!refresh)sh.scrollTop=0}
+function closeSheet(){sheetLap=null;$("#sheet").hidden=true;lastHTML="";render()}
+
+function tick(){const cb=$("#clockBig"),lb=$("#lapBig"),cl=$("#clockLabel"),md=$("#lapMode"),il=$("#intoLap");const c=cfg();const cur=clockLap();
+lb.textContent=cur?"Lap "+cur:"Lap —";md.textContent=c.lapOverride?"set by hand":(c.startAt?"":"no start time");
+if(c.startAt){const now=Date.now(),st=Date.parse(c.startAt);if(now<st){cl.textContent="Start in";cb.textContent=fmt((st-now)/1000)}else{const k=Math.floor((now-st)/lapMs())+1;const nextBell=st+k*lapMs();cl.textContent="Next bell in";cb.textContent=fmt((nextBell-now)/1000);if(il)il.textContent=fmt((now-(st+(k-1)*lapMs()))/1000);const rem=(nextBell-now)/1000;cb.style.color=rem<300?"var(--bad)":rem<600?"var(--warn)":"var(--fg)"}}else{cl.textContent="Next bell in";cb.textContent="--:--";if(il)il.textContent="—"}}
+setInterval(()=>{tick();const cur=clockLap();if(cur!==tick.lastLap){tick.lastLap=cur;lastHTML="";render()}},1000);
+
+/* ---------- events ---------- */
+document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b||b.tagName==="SELECT"||b.tagName==="TEXTAREA"||b.tagName==="INPUT")return;const a=b.dataset.act,n=+b.dataset.lap,i=+b.dataset.i;
+if(b.closest("#tabs"))return;
+const items=n?lapItems(n).map(x=>Object.assign({},x)):[];
+switch(a){
+case"inc":items[i].qty=(items[i].qty||1)+stepOf(items[i].id);saveLap(n,{items});break;
+case"dec":{const st=stepOf(items[i].id);if((items[i].qty||1)>st){items[i].qty-=st;saveLap(n,{items})}else{items.splice(i,1);saveLap(n,{items})}break}
+case"wear":{const c=Object.assign({},wearOf(n));c[b.dataset.k]=!c[b.dataset.k];saveLap(n,{wear:c});break}
+case"sky":{const L=S.laps[n]||{};const base=L.wx||(()=>{const w=wxOf(n);return w?{temp:w.temp,feels:w.feels,wind:w.wind}:{}})();const k=b.dataset.k;saveLap(n,{wx:Object.assign({},base,{sky:base.sky===k?null:k,at:new Date().toISOString()})});break}
+case"tup":case"tdn":{const L=S.laps[n]||{};const w=L.wx||wxOf(n)||{};const t0=w.temp!=null?w.temp:50;saveLap(n,{wx:Object.assign({},L.wx||{feels:w.feels,wind:w.wind,sky:w.sky},{temp:t0+(a==="tup"?1:-1),at:new Date().toISOString()})});break}
+case"care":{const c=Object.assign({},(S.laps[n]||{}).care||{});c[b.dataset.k]=!c[b.dataset.k];saveLap(n,{care:c});break}
+case"rm":items.splice(i,1);saveLap(n,{items});break;
+case"addid":items.push({id:b.dataset.id,qty:defQty(b.dataset.id)});saveLap(n,{items});toast("Added to lap "+n);break;
+case"addnext":{const nx=upNext();const it=lapItems(nx).map(x=>Object.assign({},x));it.push({id:b.dataset.id,qty:defQty(b.dataset.id)});saveLap(nx,{items:it});toast("Added to lap "+nx);break}
+case"reset":saveLap(n,{items:(S.laps[n].orig||[]).map(x=>Object.assign({},x))});break;
+case"in":{const cur=clockLap();const st=lapStart(cur);if(st==null)return;const snap={time:Math.round((Date.now()-st)/1000),inAt:new Date().toISOString()};const L0=S.laps[cur]||{};if(!L0.wx){const w=wxOf(cur);if(w){snap.wx={temp:w.temp,feels:w.feels,wind:w.wind,sky:w.sky,rain:w.rain,src:"forecast"}}}if(!L0.wear)snap.wear=wearOf(cur);saveLap(cur,snap);toast("Lap "+cur+" logged: "+fmt((Date.now()-st)/1000));break}
+case"undoin":{const L=Object.assign({},S.laps[n]);delete L.time;delete L.inAt;S.laps[n]=L;saveLap(n,{});break}
+case"manualtime":{const box=$("#manualBox");box.hidden=!box.hidden;box.dataset.lap=n;if(!box.hidden)$("#manualIn").focus();break}
+case"manualsave":{const box=$("#manualBox");const v=parseTime($("#manualIn").value);if(v==null){toast("Type it like 52:10");return}const ln=+box.dataset.lap||1;$("#manualIn").blur();saveLap(ln,{time:v});toast("Lap "+ln+" logged: "+fmt(v));break}
+case"savetime":{const v=parseTime($("#lt-"+n).value);if(v==null){toast("Type it like 52:10");return}$("#lt-"+n).blur();saveLap(n,{time:v});toast("Saved");break}
+case"open":openSheet(n);break;
+case"close":closeSheet();break;
+case"startnow":saveConfig({startAt:new Date().toISOString(),lapOverride:null});toast("Race clock started");break;
+case"savestart":{const v=$("#su-start").value;const name=$("#su-name").value.trim();if(!v){toast("Pick a start time first");return}$("#su-start").blur();saveConfig({startAt:new Date(v).toISOString(),runner:name||cfg().runner});toast("Start time saved");break}
+case"clearstart":saveConfig({startAt:null});break;
+case"lapup":saveConfig({lapOverride:(clockLap()||0)+1});break;
+case"lapdown":saveConfig({lapOverride:Math.max(1,(clockLap()||1)-1)});break;
+case"lapauto":saveConfig({lapOverride:null});break;
+case"savetargets":{const t={};METRICS.forEach(m=>{const v=parseFloat($("#tg-"+m.k).value);t[m.k]=isNaN(v)?0:v});document.activeElement.blur();saveConfig({targets:t});toast("Goals saved");break}
+case"mf":menuFilter=b.dataset.v;render();break;
+case"newitem":{const name=$("#ni-name").value.trim();if(!name){toast("Give it a name");return}const it={name,cat:$("#ni-cat").value,serving:$("#ni-serving").value.trim(),custom:true};["carbs","sodium","fluid","protein","fat","cals"].forEach(k=>{const v=parseFloat($("#ni-"+k).value);if(!isNaN(v))it[k]=v});const id="c-"+name.toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,40)+"-"+Date.now().toString(36);S.menu[id]=it;write("menu/"+id,it);document.activeElement.blur();lastHTML="";render();toast("Added "+name);break}
+case"delitem":{const id=b.dataset.id;if(b.dataset.confirm!=="1"){b.dataset.confirm="1";b.textContent="Tap again to remove";return}delete S.menu[id];S.db&&S.db.doc("menu/"+id).delete().catch(()=>{});render();break}
+case"reqready":{const r=S.reqs.find(x=>x._id===b.dataset.id);if(r){r.status="ready";const body=Object.assign({},r);delete body._id;write("requests/"+r._id,body);render();toast("Phil will see it's ready")}break}
+case"reqadd":{const r=S.reqs.find(x=>x._id===b.dataset.id);if(r){const ln=+r.lap;const it=lapItems(ln).map(x=>Object.assign({},x));(r.items||[]).forEach(id=>{if(!it.some(x=>x.id===id))it.push({id,qty:1})});saveLap(ln,{items:it});toast("Added to lap "+ln)}break}
+case"rtag":case"ritem":{const arr=a==="rtag"?S.runnerSel.tags:S.runnerSel.items;const v=b.dataset.v;const k=arr.indexOf(v);k>=0?arr.splice(k,1):arr.push(v);S.runnerSel.note=($("#rnote")||{}).value||"";render();break}
+case"rsend":{const note=($("#rnote")||{}).value.trim();if(!S.runnerSel.tags.length&&!S.runnerSel.items.length&&!note){toast("Tap something first");return}const body={lap:upNext(),tags:S.runnerSel.tags.slice(),items:S.runnerSel.items.slice(),note,at:new Date().toISOString(),status:"open"};const id="r"+Date.now().toString(36);S.reqs.unshift(Object.assign({_id:id},body));write("requests/"+id,body);S.runnerSel={tags:[],items:[],note:""};document.activeElement&&document.activeElement.blur();lastHTML="";render();toast("Sent to crew");break}
+case"gorunner":location.hash="runner";break;
+case"gocrew":location.hash="";break;
+}});
+document.addEventListener("change",e=>{const el=e.target;const a=el.dataset.act;if(!a)return;const n=+el.dataset.lap;
+if(a==="swap"){const items=lapItems(n).map(x=>Object.assign({},x));items[+el.dataset.i].id=el.value;el.blur();saveLap(n,{items})}
+else if(a==="add"&&el.value){const items=lapItems(n).map(x=>Object.assign({},x));items.push({id:el.value,qty:defQty(el.value)});el.blur();saveLap(n,{items})}
+else if(a==="ms"){menuSort=el.value;render()}});
+document.addEventListener("focusout",e=>{const el=e.target;if(el.dataset&&el.dataset.act==="note"){const n=+el.dataset.lap;const v=el.value;if((S.laps[n]||{}).notes!==v)setTimeout(()=>saveLap(n,{notes:v}),0);else setTimeout(render,0)}else if(el.tagName==="INPUT"||el.tagName==="TEXTAREA")setTimeout(()=>{if(!document.activeElement||document.activeElement===document.body)render()},0)});
+$("#tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(!b)return;S.tab=b.dataset.tab;closeSheet();window.scrollTo(0,0)});
+window.addEventListener("hashchange",()=>{lastHTML="";render();window.scrollTo(0,0)});
+
+/* ---------- boot ---------- */
+(async function(){const to=setTimeout(()=>{const n=$("#loadNote");if(n)n.textContent="Can't reach the crew board yet. Check signal; it keeps trying."},10000);
+let db=null;try{db=window.claude&&await window.claude.use("db")}catch(e){}
+if(!db){clearTimeout(to);$("#app").innerHTML='<div class="card"><div class="h">Sign in to use the crew board</div><div class="muted">The board is shared live between the crew and Phil, so it needs a signed-in Claude account with access to this page.</div></div>';return}
+S.db=db;try{const u=await window.claude.use("user");if(u&&u.can){const w=await u.can("data.write");if(w===false)S.canWrite=false}}catch(e){}
+const done=k=>{S.loaded[k]=true;if(S.loaded.config&&S.loaded.menu&&S.loaded.laps)clearTimeout(to);lastHTML="";render()};
+const err=()=>{const n=$("#loadNote");if(n)n.textContent="Lost connection to the crew board. Reopen the page."};
+db.doc("race/config").onSnapshot(s=>{if(!Q["race/config"]||!Q["race/config"].busy)S.config=s.exists?s.data():{};done("config");loadWx()},err);
+db.collection("menu").onSnapshot(s=>{const m={};s.docs.forEach(d=>m[d.id]=d.data());S.menu=m;done("menu")},err);
+db.collection("laps").onSnapshot(s=>{const L={};s.docs.forEach(d=>{const x=d.data();const busy=Q["laps/"+d.id]&&Q["laps/"+d.id].busy;L[x.lap]=busy&&S.laps[x.lap]?S.laps[x.lap]:x});Object.keys(S.laps).forEach(k=>{const q=Q["laps/"+lapId(k)];if(q&&q.busy&&!L[k])L[k]=S.laps[k]});S.laps=L;done("laps")},err);
+db.collection("requests").orderBy("at","desc").limit(20).onSnapshot(s=>{S.reqs=s.docs.map(d=>Object.assign({_id:d.id},d.data()));lastHTML="";render()},err);
+})();
+})();
+</script>
